@@ -1,47 +1,41 @@
 import { useState, useEffect } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, Users2, Euro, Trash2, Edit2, Building2, CalendarRange, MoreVertical } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { useSpring, animated } from 'react-spring'
 import { Client, PrestationType } from '../types/client'
 import { ClientModal } from './ClientModal'
 import { clientService } from '../services/ClientService'
+import { RootLayout, PageHeader, PageHeaderHeading, PageHeaderDescription } from './layout/RootLayout'
+import { cn, formatPrice } from '../lib/utils'
+import { Card, CardBody, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button } from "@nextui-org/react"
+import { format } from 'date-fns'
+import { fr } from 'date-fns/locale'
 
-interface PrestationSummary {
-  type: PrestationType
-  nombreContrats: number
-  montantTotal: number
+const PrestationBadge = ({ type }: { type: PrestationType }) => {
+  const colors: Record<PrestationType, string> = {
+    'Développement web': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+    'Design UI/UX': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+    'SEO': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+    'Marketing digital': 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
+    'Maintenance': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+  }
+
+  return (
+    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${colors[type] || 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'}`}>
+      {type}
+    </span>
+  )
 }
 
 export function ClientsList() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [clients, setClients] = useState<Client[]>([])
-  const [prestationsSummary, setPrestationsSummary] = useState<PrestationSummary[]>([])
   const [selectedClient, setSelectedClient] = useState<Client | undefined>(undefined)
 
   useEffect(() => {
     const updateClients = () => {
       const currentClients = clientService.getClients()
       setClients(currentClients)
-      
-      // Calculer le résumé des prestations
-      const summary: Record<PrestationType, PrestationSummary> = {} as Record<PrestationType, PrestationSummary>
-      
-      currentClients.forEach(client => {
-        const montantMensuel = client.frequence === 'mensuel' ? client.montant : client.montant / 12
-        
-        client.typePrestations.forEach(type => {
-          if (!summary[type]) {
-            summary[type] = {
-              type,
-              nombreContrats: 0,
-              montantTotal: 0
-            }
-          }
-          summary[type].nombreContrats++
-          // Diviser le montant par le nombre de prestations pour ce client
-          summary[type].montantTotal += montantMensuel / client.typePrestations.length
-        })
-      })
-      
-      setPrestationsSummary(Object.values(summary).sort((a, b) => b.montantTotal - a.montantTotal))
     }
 
     updateClients()
@@ -54,144 +48,208 @@ export function ClientsList() {
     setIsModalOpen(false)
   }
 
-  return (
-    <div className="px-4 sm:px-6 lg:px-8">
-      <div className="sm:flex sm:items-center">
-        <div className="sm:flex-auto">
-          <h1 className="text-xl font-semibold text-gray-900">Clients actuels</h1>
-          <p className="mt-2 text-sm text-gray-700">
-            Liste de tous vos clients actifs
-          </p>
-        </div>
-        <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-          <button
-            type="button"
-            onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:w-auto"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Ajouter un client
-          </button>
-        </div>
-      </div>
+  const totalMensuel = clients.reduce((total, client) => {
+    const montantMensuel = client.frequence === 'mensuel' ? client.montant : client.montant / 12
+    return total + montantMensuel
+  }, 0)
 
-      <div className="mt-8 flex flex-col">
-        <div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
-          <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
-            <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
-              <table className="min-w-full divide-y divide-gray-300">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
-                      Nom
-                    </th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                      Entreprise
-                    </th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                      Prestations
-                    </th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                      Montant
-                    </th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                      Fréquence
-                    </th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                      Date de début
-                    </th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                      Date de fin
-                    </th>
-                    <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
-                      <span className="sr-only">Actions</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
-                  {clients.map((client) => (
-                    <tr key={client.id}>
-                      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-                        {client.prenom} {client.nom}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {client.entreprise || '-'}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {client.typePrestations.join(', ')}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {client.montant.toLocaleString('fr-FR', {
-                          style: 'currency',
-                          currency: 'EUR',
-                        })}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {client.frequence}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {new Date(client.dateDebut).toLocaleDateString('fr-FR')}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {client.dateFin
-                          ? new Date(client.dateFin).toLocaleDateString('fr-FR')
-                          : '-'}
-                      </td>
-                      <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                        <button
+  const totalProps = useSpring({
+    number: totalMensuel,
+    from: { number: 0 },
+    config: { mass: 1, tension: 20, friction: 10 },
+  })
+
+  return (
+    <RootLayout>
+      <PageHeader>
+        <div>
+          <PageHeaderHeading>Clients actuels</PageHeaderHeading>
+          <PageHeaderDescription>
+            Gérez vos clients actifs et suivez vos revenus mensuels
+          </PageHeaderDescription>
+        </div>
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => setIsModalOpen(true)}
+          className="btn-primary hidden md:flex"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Ajouter un client
+        </motion.button>
+        <Button
+          onClick={() => setIsModalOpen(true)}
+          className="md:hidden"
+          color="primary"
+          size="sm"
+          isIconOnly
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
+      </PageHeader>
+
+      <div className="container py-6">
+        <Card className="shadow-glass backdrop-glass">
+          <CardBody>
+            <div className="space-y-2">
+              <AnimatePresence>
+                {clients.map((client, index) => (
+                  <motion.div
+                    key={client.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="p-3 rounded-lg border border-border/50 bg-background/50 hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-6">
+                      {/* Informations client */}
+                      <div className="min-w-[200px] flex items-start justify-between">
+                        <div>
+                          <h3 className="font-medium">
+                            {client.prenom} {client.nom}
+                          </h3>
+                          {client.entreprise && (
+                            <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
+                              <Building2 className="h-3.5 w-3.5" />
+                              {client.entreprise}
+                            </p>
+                          )}
+                        </div>
+                        {/* Menu burger pour mobile */}
+                        <div className="md:hidden">
+                          <Dropdown>
+                            <DropdownTrigger>
+                              <Button 
+                                isIconOnly
+                                variant="light"
+                                size="sm"
+                              >
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownTrigger>
+                            <DropdownMenu aria-label="Actions">
+                              <DropdownItem
+                                key="edit"
+                                startContent={<Edit2 className="h-4 w-4" />}
+                                onClick={() => {
+                                  setSelectedClient(client)
+                                  setIsModalOpen(true)
+                                }}
+                              >
+                                Modifier
+                              </DropdownItem>
+                              <DropdownItem
+                                key="delete"
+                                className="text-danger"
+                                color="danger"
+                                startContent={<Trash2 className="h-4 w-4" />}
+                                onClick={() => {
+                                  if (window.confirm('Êtes-vous sûr de vouloir supprimer ce client ?')) {
+                                    clientService.deleteClient(client.id)
+                                  }
+                                }}
+                              >
+                                Supprimer
+                              </DropdownItem>
+                            </DropdownMenu>
+                          </Dropdown>
+                        </div>
+                      </div>
+
+                      {/* Prestations */}
+                      <div className="flex-1">
+                        <div className="flex flex-wrap gap-1">
+                          {client.typePrestations.map((type) => (
+                            <PrestationBadge key={type} type={type} />
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Montant */}
+                      <div className="flex items-center gap-1 min-w-[120px]">
+                        <Euro className="h-3.5 w-3.5 text-primary" />
+                        <span className="font-medium">
+                          {formatPrice(client.montant)}
+                        </span>
+                        <span className="text-xs text-muted-foreground">/{client.frequence}</span>
+                      </div>
+
+                      {/* Dates */}
+                      <div className="flex items-center gap-1 min-w-[200px] text-sm text-muted-foreground">
+                        <CalendarRange className="h-3.5 w-3.5" />
+                        <div>
+                          {format(new Date(client.dateDebut), 'dd/MM/yyyy', { locale: fr })}
+                          {client.dateFin && (
+                            <> → {format(new Date(client.dateFin), 'dd/MM/yyyy', { locale: fr })}</>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Actions pour desktop */}
+                      <div className="hidden md:flex items-center gap-2">
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
                           onClick={() => {
                             setSelectedClient(client)
                             setIsModalOpen(true)
                           }}
-                          className="text-blue-600 hover:text-blue-900 mr-4"
+                          className="p-1.5 rounded-md hover:bg-muted/80 transition-colors"
                         >
-                          Modifier
-                        </button>
-                        <button
+                          <Edit2 className="h-3.5 w-3.5" />
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
                           onClick={() => {
                             if (window.confirm('Êtes-vous sûr de vouloir supprimer ce client ?')) {
                               clientService.deleteClient(client.id)
                             }
                           }}
-                          className="text-red-600 hover:text-red-900"
+                          className="p-1.5 rounded-md hover:bg-red-100 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors"
                         >
-                          Supprimer
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </motion.button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
 
-      {/* Résumé des prestations mensuelles */}
-      <div className="mt-8">
-        <div className="sm:flex sm:items-center">
-          <div className="sm:flex-auto">
-            <h2 className="text-base font-semibold leading-6 text-gray-900">
-              Total des prestations mensuelles
-            </h2>
-          </div>
-        </div>
-        <div className="mt-2 flow-root">
-          <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-            <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-              <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
-                <div className="bg-white px-4 py-5 sm:p-6">
-                  <p className="text-3xl font-semibold text-gray-900">
-                    {prestationsSummary
-                      .reduce((total, prestation) => total + prestation.montantTotal, 0)
-                      .toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
-                    /mois
-                  </p>
+              {clients.length === 0 && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-center py-6 text-muted-foreground"
+                >
+                  <Users2 className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p>Aucun client actif</p>
+                </motion.div>
+              )}
+
+              {/* Total mensuel avec animation */}
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-4 pt-4 border-t"
+              >
+                <div className="flex items-center justify-between px-3">
+                  <div className="flex items-center gap-2">
+                    <Euro className="h-3.5 w-3.5 text-primary" />
+                    <h3 className="font-medium">Total mensuel</h3>
+                  </div>
+                  <div className="flex items-baseline gap-2">
+                    <animated.span className="text-xl font-bold text-primary">
+                      {totalProps.number.to(n => formatPrice(n))}
+                    </animated.span>
+                    <span className="text-sm text-muted-foreground">/mois</span>
+                  </div>
                 </div>
-              </div>
+              </motion.div>
             </div>
-          </div>
-        </div>
+          </CardBody>
+        </Card>
       </div>
 
       <ClientModal
@@ -200,8 +258,9 @@ export function ClientsList() {
           setIsModalOpen(false)
           setSelectedClient(undefined)
         }}
-        clientToEdit={selectedClient}
+        onSubmit={handleAddClient}
+        client={selectedClient}
       />
-    </div>
+    </RootLayout>
   )
 }

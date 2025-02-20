@@ -1,11 +1,29 @@
 import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
-import { History } from 'lucide-react'
+import { History, MessageCircle, Building2, Calendar, Archive, Euro } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { ClientHistorique } from '../types/client'
 import { clientService } from '../services/ClientService'
 import { CommentaireModal } from './CommentaireModal'
-import { MessageCircle } from 'lucide-react'
+import { RootLayout, PageHeader, PageHeaderHeading, PageHeaderDescription } from './layout/RootLayout'
+import { Card, CardBody } from "@nextui-org/react"
+
+const PrestationBadge = ({ type }: { type: string }) => {
+  const colors: Record<string, string> = {
+    'Développement web': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+    'Design UI/UX': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+    'SEO': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+    'Marketing digital': 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
+    'Maintenance': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+  }
+
+  return (
+    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium transition-all duration-200 hover:scale-105 ${colors[type] || 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'}`}>
+      {type}
+    </span>
+  )
+}
 
 export function HistoriqueList() {
   const [historique, setHistorique] = useState<ClientHistorique[]>([])
@@ -14,15 +32,11 @@ export function HistoriqueList() {
   const [isCommentaireModalOpen, setIsCommentaireModalOpen] = useState(false)
 
   useEffect(() => {
-    // Charger l'historique initial
     setHistorique(clientService.getHistorique())
-
-    // S'abonner aux changements
     const unsubscribe = clientService.subscribe(() => {
       setHistorique(clientService.getHistorique())
     })
 
-    // Vérifier les contrats expirés toutes les heures
     const interval = setInterval(() => {
       clientService.verifierContratsExpires()
     }, 1000 * 60 * 60)
@@ -46,132 +60,123 @@ export function HistoriqueList() {
   }
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8">
-      <div className="sm:flex sm:items-center">
-        <div className="sm:flex-auto">
-          <div className="flex items-center">
-            <History className="h-6 w-6 text-blue-500 mr-2" />
-            <h1 className="text-xl font-semibold text-gray-900">Historique des clients</h1>
-          </div>
-          <p className="mt-2 text-sm text-gray-700">
-            Archive des contrats terminés
-          </p>
+    <RootLayout>
+      <PageHeader>
+        <div>
+          <PageHeaderHeading>Historique des clients</PageHeaderHeading>
+          <PageHeaderDescription>
+            Archive des contrats terminés et historique des collaborations
+          </PageHeaderDescription>
         </div>
-      </div>
+      </PageHeader>
 
-      <div className="mt-8 flex flex-col">
-        <div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
-          <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
-            <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
-              <table className="min-w-full divide-y divide-gray-300">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th
-                      scope="col"
-                      className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
-                    >
-                      Client
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-                    >
-                      Prestations
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-                    >
-                      Montant
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-                    >
-                      Période
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-                    >
-                      Commentaire
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
-                  {historique.map((client) => (
-                    <tr key={client.id}>
-                      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
-                        <div className="font-medium text-gray-900">
-                          {client.nom} {client.prenom}
-                        </div>
+      <div className="container py-6">
+        <Card className="shadow-glass backdrop-glass">
+          <CardBody>
+            <div className="space-y-2">
+              <AnimatePresence>
+                {historique.map((client, index) => (
+                  <motion.div
+                    key={client.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="p-3 rounded-lg border border-border/50 bg-background/50 hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-6">
+                      {/* Informations client */}
+                      <div className="min-w-[200px]">
+                        <h3 className="font-medium">
+                          {client.prenom} {client.nom}
+                        </h3>
                         {client.entreprise && (
-                          <div className="text-gray-500">{client.entreprise}</div>
+                          <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
+                            <Building2 className="h-3.5 w-3.5" />
+                            {client.entreprise}
+                          </p>
                         )}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        <div className="space-x-1">
+                      </div>
+
+                      {/* Prestations */}
+                      <div className="flex-1">
+                        <div className="flex flex-wrap gap-1">
                           {client.typePrestations.map((type) => (
-                            <span
-                              key={type}
-                              className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800"
-                            >
-                              {type}
-                            </span>
+                            <PrestationBadge key={type} type={type} />
                           ))}
                         </div>
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        <div>
+                      </div>
+
+                      {/* Montant */}
+                      <div className="flex items-center gap-1 min-w-[120px]">
+                        <Euro className="h-3.5 w-3.5 text-primary" />
+                        <span className="font-medium">
                           {client.montant.toLocaleString('fr-FR', {
                             style: 'currency',
                             currency: 'EUR',
                           })}
+                        </span>
+                        <span className="text-xs text-muted-foreground">/{client.frequence}</span>
+                      </div>
+
+                      {/* Dates */}
+                      <div className="flex items-center gap-4 min-w-[280px]">
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Calendar className="h-3.5 w-3.5" />
+                          <div>
+                            {format(new Date(client.dateDebut), 'dd/MM/yyyy', { locale: fr })}
+                            {' → '}
+                            {format(new Date(client.dateFin!), 'dd/MM/yyyy', { locale: fr })}
+                          </div>
                         </div>
-                        <div className="text-xs text-gray-400">{client.frequence}</div>
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        <div>
-                          Du {format(new Date(client.dateDebut), 'dd/MM/yyyy', { locale: fr })}
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Archive className="h-3.5 w-3.5" />
+                          {format(new Date(client.dateArchivage), 'dd/MM/yyyy', { locale: fr })}
                         </div>
-                        <div>
-                          Au {format(new Date(client.dateFin!), 'dd/MM/yyyy', { locale: fr })}
-                        </div>
-                        <div className="text-xs text-gray-400">
-                          Archivé le{' '}
-                          {format(new Date(client.dateArchivage), 'dd/MM/yyyy', {
-                            locale: fr,
-                          })}
-                        </div>
-                      </td>
-                      <td className="px-3 py-4 text-sm text-gray-500">
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => handleOpenCommentaire(client)}
-                            className="inline-flex items-center text-blue-600 hover:text-blue-900"
-                          >
-                            <MessageCircle className="h-4 w-4 mr-1" />
-                            {client.commentaire ? 'Modifier' : 'Ajouter'}
-                          </button>
-                          {client.commentaire && (
-                            <span className="text-gray-500">{client.commentaire}</span>
+                      </div>
+
+                      {/* Commentaire */}
+                      <div className="flex items-start gap-2 min-w-[250px]">
+                        <MessageCircle className="h-3.5 w-3.5 text-primary flex-shrink-0 mt-1" />
+                        <div className="overflow-hidden">
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs font-medium">Commentaire</span>
+                            <button
+                              onClick={() => handleOpenCommentaire(client)}
+                              className="text-xs text-primary hover:text-primary/80 transition-colors"
+                            >
+                              {client.commentaire ? '(modifier)' : '(ajouter)'}
+                            </button>
+                          </div>
+                          {client.commentaire ? (
+                            <p className="text-sm text-muted-foreground line-clamp-2 mt-0.5">
+                              {client.commentaire}
+                            </p>
+                          ) : (
+                            <p className="text-xs text-muted-foreground italic mt-0.5">
+                              Aucun commentaire
+                            </p>
                           )}
                         </div>
-                      </td>
-                    </tr>
-                  ))}
-                  {historique.length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="px-3 py-4 text-sm text-gray-500 text-center">
-                        Aucun contrat dans l'historique
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+
+              {historique.length === 0 && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-center py-6 text-muted-foreground"
+                >
+                  <History className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p>Aucun contrat dans l'historique</p>
+                </motion.div>
+              )}
             </div>
-          </div>
-        </div>
+          </CardBody>
+        </Card>
       </div>
 
       <CommentaireModal
@@ -181,6 +186,6 @@ export function HistoriqueList() {
         onChange={setCommentaireTemp}
         onSave={handleSaveCommentaire}
       />
-    </div>
+    </RootLayout>
   )
 }

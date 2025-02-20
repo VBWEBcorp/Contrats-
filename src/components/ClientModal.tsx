@@ -109,153 +109,154 @@ export function ClientModal({ isOpen, onClose, clientToEdit }: ClientModalProps)
                 </div>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-6">
-                  {/* Nom */}
-                  <div>
-                    <label htmlFor="nom" className="block text-sm font-medium text-gray-700">
-                      Nom *
-                    </label>
-                    <input
-                      type="text"
-                      {...register('nom', { required: 'Le nom est requis' })}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                    />
-                    {errors.nom && (
-                      <p className="mt-1 text-sm text-red-600">{errors.nom.message}</p>
-                    )}
-                  </div>
-
-                  {/* Prénom */}
-                  <div>
-                    <label htmlFor="prenom" className="block text-sm font-medium text-gray-700">
-                      Prénom *
-                    </label>
-                    <input
-                      type="text"
-                      {...register('prenom', { required: 'Le prénom est requis' })}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                    />
-                    {errors.prenom && (
-                      <p className="mt-1 text-sm text-red-600">{errors.prenom.message}</p>
-                    )}
-                  </div>
-
-                  {/* Entreprise */}
-                  <div>
-                    <label htmlFor="entreprise" className="block text-sm font-medium text-gray-700">
-                      Entreprise
-                    </label>
-                    <input
-                      type="text"
-                      {...register('entreprise')}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                    />
-                  </div>
-
-                  {/* Types de prestations */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Types de prestations *
-                    </label>
-                    <Controller
-                      name="typePrestations"
-                      control={control}
-                      rules={{ required: 'Sélectionnez au moins un type de prestation' }}
-                      render={({ field }) => (
-                        <div className="mt-2 space-y-2">
-                          {TYPES_PRESTATIONS.map((type) => (
-                            <div key={type} className="flex items-center">
-                              <input
-                                type="checkbox"
-                                id={type}
-                                value={type}
-                                checked={field.value.includes(type)}
-                                onChange={(e) => {
-                                  const value = e.target.value as PrestationType
-                                  const newValue = e.target.checked
-                                    ? [...field.value, value]
-                                    : field.value.filter((v) => v !== value)
-                                  field.onChange(newValue)
-                                }}
-                                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                              />
-                              <label htmlFor={type} className="ml-2 text-sm text-gray-700">
-                                {type}
-                              </label>
-                            </div>
-                          ))}
-                        </div>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="prenom" className="block text-sm font-medium text-gray-700">
+                          Prénom *
+                        </label>
+                        <input
+                          type="text"
+                          {...register('prenom', { required: 'Le prénom est requis' })}
+                          className="mt-1 block w-full rounded-none border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-background"
+                        />
+                        {errors.prenom && (
+                          <p className="mt-1 text-sm text-red-600">{errors.prenom.message}</p>
+                        )}
+                      </div>
+                      <div>
+                        <label htmlFor="nom" className="block text-sm font-medium text-gray-700">
+                          Nom *
+                        </label>
+                        <input
+                          type="text"
+                          {...register('nom', { required: 'Le nom est requis' })}
+                          className="mt-1 block w-full rounded-none border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-background"
+                        />
+                        {errors.nom && (
+                          <p className="mt-1 text-sm text-red-600">{errors.nom.message}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <label htmlFor="entreprise" className="block text-sm font-medium text-gray-700">
+                        Entreprise
+                      </label>
+                      <input
+                        type="text"
+                        {...register('entreprise')}
+                        className="mt-1 block w-full rounded-none border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-background"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="montant" className="block text-sm font-medium text-gray-700">
+                          Montant (€) *
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          {...register('montant', {
+                            required: 'Le montant est requis',
+                            min: { value: 0, message: 'Le montant doit être positif' },
+                          })}
+                          className="mt-1 block w-full rounded-none border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-background"
+                        />
+                        {errors.montant && (
+                          <p className="mt-1 text-sm text-red-600">{errors.montant.message}</p>
+                        )}
+                      </div>
+                      <div>
+                        <label htmlFor="frequence" className="block text-sm font-medium text-gray-700">
+                          Fréquence *
+                        </label>
+                        <select
+                          {...register('frequence', { required: 'La fréquence est requise' })}
+                          className="mt-1 block w-full rounded-none border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-background"
+                        >
+                          <option value="mensuel">Mensuel</option>
+                          <option value="annuel">Annuel</option>
+                        </select>
+                        {errors.frequence && (
+                          <p className="mt-1 text-sm text-red-600">{errors.frequence.message}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="dateDebut" className="block text-sm font-medium text-gray-700">
+                          Date de début *
+                        </label>
+                        <input
+                          type="date"
+                          {...register('dateDebut', { required: 'La date de début est requise' })}
+                          className="mt-1 block w-full rounded-none border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-background"
+                        />
+                        {errors.dateDebut && (
+                          <p className="mt-1 text-sm text-red-600">{errors.dateDebut.message}</p>
+                        )}
+                      </div>
+                      <div>
+                        <label htmlFor="dateFin" className="block text-sm font-medium text-gray-700">
+                          Date de fin
+                        </label>
+                        <input
+                          type="date"
+                          {...register('dateFin')}
+                          className="mt-1 block w-full rounded-none border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-background"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Types de prestations *
+                      </label>
+                      <Controller
+                        name="typePrestations"
+                        control={control}
+                        rules={{ required: 'Sélectionnez au moins un type de prestation' }}
+                        render={({ field }) => (
+                          <div className="mt-2 space-y-2">
+                            {TYPES_PRESTATIONS.map((type) => (
+                              <div key={type} className="flex items-center">
+                                <input
+                                  type="checkbox"
+                                  id={type}
+                                  value={type}
+                                  checked={field.value.includes(type)}
+                                  onChange={(e) => {
+                                    const value = e.target.value as PrestationType
+                                    const newValue = e.target.checked
+                                      ? [...field.value, value]
+                                      : field.value.filter((v) => v !== value)
+                                    field.onChange(newValue)
+                                  }}
+                                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                <label htmlFor={type} className="ml-2 text-sm text-gray-700">
+                                  {type}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      />
+                      {errors.typePrestations && (
+                        <p className="mt-1 text-sm text-red-600">
+                          {errors.typePrestations.message}
+                        </p>
                       )}
-                    />
-                    {errors.typePrestations && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {errors.typePrestations.message}
-                      </p>
-                    )}
+                    </div>
+                    <div>
+                      <label htmlFor="commentaire" className="block text-sm font-medium text-gray-700">
+                        Commentaire
+                      </label>
+                      <textarea
+                        {...register('commentaire')}
+                        className="mt-1 block w-full rounded-none border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-background"
+                      />
+                    </div>
                   </div>
-
-                  {/* Montant */}
-                  <div>
-                    <label htmlFor="montant" className="block text-sm font-medium text-gray-700">
-                      Montant (€) *
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      {...register('montant', {
-                        required: 'Le montant est requis',
-                        min: { value: 0, message: 'Le montant doit être positif' },
-                      })}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                    />
-                    {errors.montant && (
-                      <p className="mt-1 text-sm text-red-600">{errors.montant.message}</p>
-                    )}
-                  </div>
-
-                  {/* Fréquence */}
-                  <div>
-                    <label htmlFor="frequence" className="block text-sm font-medium text-gray-700">
-                      Fréquence *
-                    </label>
-                    <select
-                      {...register('frequence', { required: 'La fréquence est requise' })}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                    >
-                      <option value="mensuel">Mensuel</option>
-                      <option value="annuel">Annuel</option>
-                    </select>
-                    {errors.frequence && (
-                      <p className="mt-1 text-sm text-red-600">{errors.frequence.message}</p>
-                    )}
-                  </div>
-
-                  {/* Date de début */}
-                  <div>
-                    <label htmlFor="dateDebut" className="block text-sm font-medium text-gray-700">
-                      Date de début *
-                    </label>
-                    <input
-                      type="date"
-                      {...register('dateDebut', { required: 'La date de début est requise' })}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                    />
-                    {errors.dateDebut && (
-                      <p className="mt-1 text-sm text-red-600">{errors.dateDebut.message}</p>
-                    )}
-                  </div>
-
-                  {/* Date de fin */}
-                  <div>
-                    <label htmlFor="dateFin" className="block text-sm font-medium text-gray-700">
-                      Date de fin
-                    </label>
-                    <input
-                      type="date"
-                      {...register('dateFin')}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                    />
-                  </div>
-
                   <div className="mt-6 flex justify-end gap-3">
                     <button
                       type="button"
