@@ -17,13 +17,16 @@ export interface Client {
   frequence: FrequenceType;
   dateDebut: string;
   dateFin?: string;
+  created_at?: string;
+  archive: boolean;
 }
 
 export interface ClientHistorique {
   id: string;
   client_id: string;
   dateArchivage: string;
-  commentaire: string;
+  commentaire?: string;
+  created_at?: string;
 }
 
 export const TYPES_PRESTATIONS: PrestationType[] = [

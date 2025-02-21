@@ -1,5 +1,7 @@
 import { supabase } from '../lib/supabase';
-import { Client, ClientHistorique } from '../types/client';
+import { Client, ClientHistorique, PrestationType, FrequenceType } from '../types/client';
+import { isBefore, parseISO } from 'date-fns';
+import { toast } from 'react-toastify';
 
 type Subscriber = () => void
 
@@ -146,69 +148,122 @@ class ClientService {
   }
 
   static async getClients(): Promise<Client[]> {
-    const { data, error } = await supabase
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('*')
+        .eq('archive', false);
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+      toast.error('Erreur lors de la récupération des clients');
+      return [];
+    }
+  }
+
+  static async getArchivedClients(): Promise<Client[]> {
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('*')
+        .eq('archive', true);
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching archived clients:', error);
+      toast.error('Erreur lors de la récupération des clients archivés');
+      return [];
+    }
+  }
+
+  static async addClient(client: Omit<Client, 'id'>): Promise<Client | null> {
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .insert([client])
+        .select()
+        .single();
+
+      if (error) throw error;
+      toast.success('Client ajouté avec succès');
+      return data;
+    } catch (error) {
+      console.error('Error adding client:', error);
+      toast.error('Erreur lors de l\'ajout du client');
+      return null;
+    }
+  }
+
+  static async updateClient(client: Client): Promise<Client | null> {
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .update(client)
+        .eq('id', client.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      toast.success('Client mis à jour avec succès');
+      return data;
+    } catch (error) {
+      console.error('Error updating client:', error);
+      toast.error('Erreur lors de la mise à jour du client');
+      return null;
+    }
+  }
+
+  static async archiveClient(client: Client, commentaire: string): Promise<boolean> {
+    try {
+      const dateArchivage = new Date().toISOString();
+      
+      // Create historique entry
+      const historiqueEntry = {
+        client_id: client.id,
+        dateArchivage,
+        commentaire,
+        ...client
+      };
+
+      const { error: historiqueError } = await supabase
+        .from('historique_clients')
+        .insert([historiqueEntry]);
+
+      if (historiqueError) throw historiqueError;
+
+      // Update client status
+      const { error: updateError } = await supabase
+        .from('clients')
+        .update({ archive: true })
+        .eq('id', client.id);
+
+      if (updateError) throw updateError;
+
+      toast.success('Client archivé avec succès');
+      return true;
+    } catch (error) {
+      console.error('Error archiving client:', error);
+      toast.error('Erreur lors de l\'archivage du client');
+      return false;
+    }
+  }
+
+  static async isClientExist(nom: string, prenom: string, dateDebut: string): Promise<boolean> {
+    const { data: clients } = await supabase
       .from('clients')
-      .select('*');
+      .select('*')
+      .eq('nom', nom)
+      .eq('prenom', prenom)
+      .eq('archive', false);
 
-    if (error) throw error;
-    return data || [];
-  }
+    if (!clients || clients.length === 0) return false;
 
-  static async addClient(client: Omit<Client, 'id'>): Promise<Client> {
-    const { data, error } = await supabase
-      .from('clients')
-      .insert([client])
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  }
-
-  static async updateClient(id: string, client: Partial<Client>): Promise<void> {
-    const { error } = await supabase
-      .from('clients')
-      .update(client)
-      .eq('id', id);
-
-    if (error) throw error;
-  }
-
-  static async deleteClient(id: string): Promise<void> {
-    const { error } = await supabase
-      .from('clients')
-      .delete()
-      .eq('id', id);
-
-    if (error) throw error;
-  }
-
-  static async archiveClient(client: Client, commentaire: string): Promise<void> {
-    const historiqueClient: Omit<ClientHistorique, 'id'> = {
-      client_id: client.id,
-      dateArchivage: new Date().toISOString(),
-      commentaire
-    };
-
-    const { error: archiveError } = await supabase
-      .from('historique_clients')
-      .insert([historiqueClient]);
-
-    if (archiveError) throw archiveError;
-
-    await this.deleteClient(client.id);
-  }
-
-  static async getClientsArchives(): Promise<ClientHistorique[]> {
-    const { data, error } = await supabase
-      .from('historique_clients')
-      .select(`
-        *,
-        clients (*)
-      `);
-
-    if (error) throw error;
-    return data || [];
+    return clients.some(client => 
+      isBefore(parseISO(dateDebut), parseISO(client.dateFin || new Date().toISOString()))
+    );
   }
 }
 

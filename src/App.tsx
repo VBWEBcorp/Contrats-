@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Users } from 'lucide-react'
-import { ClientsList } from './components/ClientsList'
+import ClientsList from './components/ClientsList'
 import { HistoriqueList } from './components/HistoriqueList'
 import { Statistiques } from './components/Statistiques'
 import { Navigation } from './components/Navigation'
