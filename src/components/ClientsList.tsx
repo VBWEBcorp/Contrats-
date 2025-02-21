@@ -1,18 +1,13 @@
 import { useState, useEffect } from 'react'
-import { Plus, Users2, Euro, Trash2, Edit2, Building2, CalendarRange, MoreVertical } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { useSpring, animated } from 'react-spring'
-import { Client, PrestationType, TYPES_PRESTATIONS } from '../types/client'
-import { ClientModal } from './ClientModal'
+import { Client } from '../types/client'
 import { clientService } from '../services/ClientService'
-import { RootLayout, PageHeader, PageHeaderHeading, PageHeaderDescription } from './layout/RootLayout'
-import { formatPrice } from '../lib/utils'
-import { Card, CardBody, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button } from "@nextui-org/react"
+import { motion } from 'framer-motion'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
+import { ClientModal } from './ClientModal'
 
-const PrestationBadge = ({ type }: { type: PrestationType }) => {
-  const colors: Record<PrestationType, string> = {
+const PrestationBadge = ({ type }: { type: string }) => {
+  const colors: Record<string, string> = {
     'Développement web': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
     'Design UI/UX': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
     'SEO': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
@@ -62,20 +57,14 @@ export function ClientsList() {
   // Arrondir le total à 2 décimales
   const totalArrondi = Math.round(totalMensuel * 100) / 100
 
-  const totalProps = useSpring({
-    number: totalArrondi,
-    from: { number: 0 },
-    config: { mass: 1, tension: 20, friction: 10 },
-  })
-
   return (
-    <RootLayout>
-      <PageHeader>
+    <div>
+      <div>
         <div>
-          <PageHeaderHeading>Clients actuels</PageHeaderHeading>
-          <PageHeaderDescription>
+          <h2>Clients actuels</h2>
+          <p>
             Gérez vos clients actifs et suivez vos revenus mensuels
-          </PageHeaderDescription>
+          </p>
         </div>
         <motion.button
           whileHover={{ scale: 1.02 }}
@@ -83,182 +72,169 @@ export function ClientsList() {
           onClick={() => setIsModalOpen(true)}
           className="btn-primary hidden md:flex"
         >
-          <Plus className="h-4 w-4 mr-2" />
+          <span className="h-4 w-4 mr-2" />
           Ajouter un client
         </motion.button>
-        <Button
+        <button
           onClick={() => setIsModalOpen(true)}
           className="md:hidden"
-          color="primary"
-          size="sm"
-          isIconOnly
         >
-          <Plus className="h-4 w-4" />
-        </Button>
-      </PageHeader>
+          <span className="h-4 w-4" />
+        </button>
+      </div>
 
       <div className="container py-6">
-        <Card className="shadow-glass backdrop-glass">
-          <CardBody>
+        <div className="shadow-glass backdrop-glass">
+          <div>
             <div className="space-y-2">
-              <AnimatePresence>
-                {clients.map((client, index) => (
-                  <motion.div
-                    key={client.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="p-3 rounded-lg border border-border/50 bg-background/50 hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-6">
-                      {/* Informations client */}
-                      <div className="min-w-[200px] flex items-start justify-between">
+              {clients.map((client, index) => (
+                <motion.div
+                  key={client.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="p-3 rounded-lg border border-border/50 bg-background/50 hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-6">
+                    {/* Informations client */}
+                    <div className="min-w-[200px] flex items-start justify-between">
+                      <div>
+                        <h3 className="font-medium">
+                          {client.prenom} {client.nom}
+                        </h3>
+                        {client.entreprise && (
+                          <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
+                            <span className="h-3.5 w-3.5" />
+                            {client.entreprise}
+                          </p>
+                        )}
+                      </div>
+                      {/* Menu burger pour mobile */}
+                      <div className="md:hidden">
                         <div>
-                          <h3 className="font-medium">
-                            {client.prenom} {client.nom}
-                          </h3>
-                          {client.entreprise && (
-                            <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
-                              <Building2 className="h-3.5 w-3.5" />
-                              {client.entreprise}
-                            </p>
-                          )}
+                          <button 
+                            className="isIconOnly"
+                          >
+                            <span className="h-4 w-4" />
+                          </button>
+                          <div aria-label="Actions">
+                            <div
+                              key="edit"
+                              className="startContent"
+                            >
+                              <span className="h-4 w-4" />
+                              Modifier
+                            </div>
+                            <div
+                              key="delete"
+                              className="text-danger startContent"
+                              onClick={() => {
+                                if (window.confirm('Êtes-vous sûr de vouloir supprimer ce client ?')) {
+                                  clientService.deleteClient(client.id)
+                                }
+                              }}
+                            >
+                              <span className="h-4 w-4" />
+                              Supprimer
+                            </div>
+                          </div>
                         </div>
-                        {/* Menu burger pour mobile */}
-                        <div className="md:hidden">
-                          <Dropdown>
-                            <DropdownTrigger>
-                              <Button 
-                                isIconOnly
-                                variant="light"
-                                size="sm"
-                              >
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownTrigger>
-                            <DropdownMenu aria-label="Actions">
-                              <DropdownItem
-                                key="edit"
-                                startContent={<Edit2 className="h-4 w-4" />}
-                                onClick={() => {
-                                  setSelectedClient(client)
-                                  setIsModalOpen(true)
-                                }}
-                              >
-                                Modifier
-                              </DropdownItem>
-                              <DropdownItem
-                                key="delete"
-                                className="text-danger"
-                                color="danger"
-                                startContent={<Trash2 className="h-4 w-4" />}
-                                onClick={() => {
-                                  if (window.confirm('Êtes-vous sûr de vouloir supprimer ce client ?')) {
-                                    clientService.deleteClient(client.id)
-                                  }
-                                }}
-                              >
-                                Supprimer
-                              </DropdownItem>
-                            </DropdownMenu>
-                          </Dropdown>
-                        </div>
-                      </div>
-
-                      {/* Prestations */}
-                      <div className="flex-1">
-                        <div className="flex flex-wrap gap-1">
-                          {client.typePrestations.map((type) => (
-                            <PrestationBadge key={type} type={type} />
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Montant */}
-                      <div className="flex items-center gap-1 min-w-[120px]">
-                        <Euro className="h-3.5 w-3.5 text-primary" />
-                        <span className="font-medium">
-                          {formatPrice(client.montant)}
-                        </span>
-                        <span className="text-xs text-muted-foreground">/{client.frequence}</span>
-                      </div>
-
-                      {/* Dates */}
-                      <div className="flex items-center gap-1 min-w-[200px] text-sm text-muted-foreground">
-                        <CalendarRange className="h-3.5 w-3.5" />
-                        <div>
-                          {format(new Date(client.dateDebut), 'dd/MM/yyyy', { locale: fr })}
-                          {client.dateFin && (
-                            <> → {format(new Date(client.dateFin), 'dd/MM/yyyy', { locale: fr })}</>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Actions pour desktop */}
-                      <div className="hidden md:flex items-center gap-2">
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => {
-                            setSelectedClient(client)
-                            setIsModalOpen(true)
-                          }}
-                          className="p-1.5 rounded-md hover:bg-muted/80 transition-colors"
-                        >
-                          <Edit2 className="h-3.5 w-3.5" />
-                        </motion.button>
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => {
-                            if (window.confirm('Êtes-vous sûr de vouloir supprimer ce client ?')) {
-                              clientService.deleteClient(client.id)
-                            }
-                          }}
-                          className="p-1.5 rounded-md hover:bg-red-100 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </motion.button>
                       </div>
                     </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
 
-              {clients.length === 0 && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="text-center py-6 text-muted-foreground"
-                >
-                  <Users2 className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p>Aucun client actif</p>
+                    {/* Prestations */}
+                    <div className="flex-1">
+                      <div className="flex flex-wrap gap-1">
+                        {client.typePrestations.map((type) => (
+                          <PrestationBadge key={type} type={type} />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Montant */}
+                    <div className="flex items-center gap-1 min-w-[120px]">
+                      <span className="h-3.5 w-3.5 text-primary" />
+                      <span className="font-medium">
+                        {client.montant}
+                      </span>
+                      <span className="text-xs text-muted-foreground">/{client.frequence}</span>
+                    </div>
+
+                    {/* Dates */}
+                    <div className="flex items-center gap-1 min-w-[200px] text-sm text-muted-foreground">
+                      <span className="h-3.5 w-3.5" />
+                      <div>
+                        {format(new Date(client.dateDebut), 'dd/MM/yyyy', { locale: fr })}
+                        {client.dateFin && (
+                          <> → {format(new Date(client.dateFin), 'dd/MM/yyyy', { locale: fr })}</>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Actions pour desktop */}
+                    <div className="hidden md:flex items-center gap-2">
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => {
+                          setSelectedClient(client)
+                          setIsModalOpen(true)
+                        }}
+                        className="p-1.5 rounded-md hover:bg-muted/80 transition-colors"
+                      >
+                        <span className="h-3.5 w-3.5" />
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => {
+                          if (window.confirm('Êtes-vous sûr de vouloir supprimer ce client ?')) {
+                            clientService.deleteClient(client.id)
+                          }
+                        }}
+                        className="p-1.5 rounded-md hover:bg-red-100 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors"
+                      >
+                        <span className="h-3.5 w-3.5" />
+                      </motion.button>
+                    </div>
+                  </div>
                 </motion.div>
-              )}
-
-              {/* Total mensuel avec animation */}
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-4 pt-4 border-t"
-              >
-                <div className="flex items-center justify-between px-3">
-                  <div className="flex items-center gap-2">
-                    <Euro className="h-3.5 w-3.5 text-primary" />
-                    <h3 className="font-medium">Total mensuel</h3>
-                  </div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-xl font-bold text-primary">
-                      {formatPrice(totalArrondi)}
-                    </span>
-                    <span className="text-sm text-muted-foreground">/mois</span>
-                  </div>
-                </div>
-              </motion.div>
+              ))}
             </div>
-          </CardBody>
-        </Card>
+
+            {clients.length === 0 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-center py-6 text-muted-foreground"
+              >
+                <span className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                <p>Aucun client actif</p>
+              </motion.div>
+            )}
+
+            {/* Total mensuel avec animation */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-4 pt-4 border-t"
+            >
+              <div className="flex items-center justify-between px-3">
+                <div className="flex items-center gap-2">
+                  <span className="h-3.5 w-3.5 text-primary" />
+                  <h3 className="font-medium">Total mensuel</h3>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-xl font-bold text-primary">
+                    {totalArrondi}
+                  </span>
+                  <span className="text-sm text-muted-foreground">/mois</span>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
       </div>
 
       <ClientModal
@@ -270,6 +246,6 @@ export function ClientsList() {
         onSubmit={handleAddClient}
         client={selectedClient}
       />
-    </RootLayout>
+    </div>
   )
 }

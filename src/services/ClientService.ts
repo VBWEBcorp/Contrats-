@@ -1,5 +1,5 @@
 import { Client, ClientHistorique } from '../types/client'
-import { isAfter, isBefore, parseISO } from 'date-fns'
+import { isBefore, parseISO } from 'date-fns'
 
 type Subscriber = () => void
 
@@ -9,6 +9,7 @@ class ClientService {
   private readonly STORAGE_KEY_HISTORIQUE = 'clientsHistorique'
   private clients: Client[] = []
   private historique: ClientHistorique[] = []
+  private clientsArchives: ClientHistorique[] = []
 
   constructor() {
     this.loadFromStorage()
@@ -76,6 +77,10 @@ class ClientService {
     return this.historique
   }
 
+  getClientsArchives(): ClientHistorique[] {
+    return this.clientsArchives
+  }
+
   getClientById(id: string): Client | undefined {
     return this.clients.find(client => client.id === id)
   }
@@ -128,8 +133,12 @@ class ClientService {
   subscribe(callback: Subscriber) {
     this.subscribers.push(callback)
     return () => {
-      this.subscribers = this.subscribers.filter(sub => sub !== callback)
+      this.unsubscribe(callback)
     }
+  }
+
+  unsubscribe(subscriber: Subscriber): void {
+    this.subscribers = this.subscribers.filter(s => s !== subscriber)
   }
 
   private notifySubscribers() {

@@ -32,19 +32,15 @@ export function HistoriqueList() {
   const [isCommentaireModalOpen, setIsCommentaireModalOpen] = useState(false)
 
   useEffect(() => {
+    // Charger l'historique au montage
     setHistorique(clientService.getHistorique())
+
+    // S'abonner aux mises à jour
     const unsubscribe = clientService.subscribe(() => {
       setHistorique(clientService.getHistorique())
     })
 
-    const interval = setInterval(() => {
-      clientService.verifierContratsExpires()
-    }, 1000 * 60 * 60)
-
-    return () => {
-      clearInterval(interval)
-      unsubscribe()
-    }
+    return () => unsubscribe()
   }, [])
 
   const handleOpenCommentaire = (client: ClientHistorique) => {

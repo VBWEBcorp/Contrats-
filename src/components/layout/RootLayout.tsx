@@ -1,8 +1,9 @@
-import { motion } from "framer-motion"
+import { ReactNode } from 'react'
+import { motion } from 'framer-motion'
 import { cn } from "../../lib/utils"
 
 interface RootLayoutProps {
-  children: React.ReactNode
+  children: ReactNode
   className?: string
 }
 
@@ -12,6 +13,7 @@ export function RootLayout({ children, className }: RootLayoutProps) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
       className={cn(
         "min-h-screen bg-background font-sans antialiased",
         className
@@ -24,55 +26,26 @@ export function RootLayout({ children, className }: RootLayoutProps) {
   )
 }
 
-export function PageHeader({
-  className,
-  children,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+export function PageHeader({ children }: { children: ReactNode }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={cn(
-        "flex flex-col items-center justify-between gap-4 px-6 py-8 md:flex-row md:gap-8",
-        className
-      )}
-      {...props}
-    >
+    <div className="flex items-center justify-between px-8 py-4 border-b">
       {children}
-    </motion.div>
+    </div>
   )
 }
 
-export function PageHeaderHeading({
-  className,
-  children,
-  ...props
-}: React.HTMLAttributes<HTMLHeadingElement>) {
+export function PageHeaderHeading({ children }: { children: ReactNode }) {
   return (
-    <h1
-      className={cn(
-        "title text-3xl font-bold leading-tight tracking-tighter md:text-5xl lg:leading-[1.1]",
-        className
-      )}
-      {...props}
-    >
+    <h1 className="text-2xl font-bold tracking-tight">
       {children}
     </h1>
   )
 }
 
-export function PageHeaderDescription({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLParagraphElement>) {
+export function PageHeaderDescription({ children }: { children: ReactNode }) {
   return (
-    <p
-      className={cn(
-        "max-w-[750px] text-lg text-muted-foreground sm:text-xl",
-        className
-      )}
-      {...props}
-    />
+    <p className="text-sm text-muted-foreground">
+      {children}
+    </p>
   )
 }

@@ -21,6 +21,7 @@ export interface Client {
 
 export interface ClientHistorique extends Client {
   dateArchivage: string;
+  commentaire?: string;
 }
 
 export const TYPES_PRESTATIONS: PrestationType[] = [

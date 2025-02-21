@@ -7,7 +7,8 @@ import { clientService } from '../services/ClientService'
 interface ClientModalProps {
   isOpen: boolean
   onClose: () => void
-  clientToEdit?: Client
+  client?: Client
+  onSubmit?: (clientData: Omit<Client, "id">) => void
 }
 
 const TYPES_PRESTATIONS: PrestationType[] = [
@@ -18,54 +19,39 @@ const TYPES_PRESTATIONS: PrestationType[] = [
   'Site Internet'
 ]
 
-export function ClientModal({ isOpen, onClose, clientToEdit }: ClientModalProps) {
+export function ClientModal({ isOpen, onClose, client, onSubmit }: ClientModalProps) {
   const {
     register,
     handleSubmit,
     reset,
     control,
-    formState: { errors },
-  } = useForm<Client>({
-    defaultValues: {
-      nom: '',
-      prenom: '',
-      entreprise: '',
-      typePrestations: [],
-      montant: 0,
-      frequence: 'mensuel',
-      dateDebut: new Date().toISOString().split('T')[0],
-      dateFin: '',
-      commentaire: ''
-    }
-  })
+    formState: { errors }
+  } = useForm<Client>()
 
   useEffect(() => {
-    if (clientToEdit) {
-      reset({
-        ...clientToEdit,
-        dateDebut: new Date(clientToEdit.dateDebut).toISOString().split('T')[0],
-        dateFin: clientToEdit.dateFin ? new Date(clientToEdit.dateFin).toISOString().split('T')[0] : ''
-      })
-    } else {
-      reset({
-        nom: '',
-        prenom: '',
-        entreprise: '',
-        typePrestations: [],
-        montant: 0,
-        frequence: 'mensuel',
-        dateDebut: new Date().toISOString().split('T')[0],
-        dateFin: '',
-        commentaire: ''
-      })
+    if (client) {
+      const formData = {
+        nom: client.nom,
+        prenom: client.prenom,
+        entreprise: client.entreprise,
+        typePrestations: client.typePrestations,
+        montant: client.montant,
+        frequence: client.frequence,
+        dateDebut: client.dateDebut ? new Date(client.dateDebut).toISOString().split('T')[0] : '',
+        dateFin: client.dateFin ? new Date(client.dateFin).toISOString().split('T')[0] : ''
+      }
+      reset(formData)
     }
-  }, [clientToEdit, reset])
+  }, [client, reset])
 
-  const onSubmit = (data: Client) => {
-    if (clientToEdit) {
-      clientService.updateClient({ ...data, id: clientToEdit.id })
+  const handleFormSubmit = (data: Client) => {
+    if (client) {
+      clientService.updateClient({ ...data, id: client.id })
     } else {
       clientService.addClient(data)
+    }
+    if (onSubmit) {
+      onSubmit(data)
     }
     onClose()
   }
@@ -103,12 +89,12 @@ export function ClientModal({ isOpen, onClose, clientToEdit }: ClientModalProps)
                       as="h3"
                       className="text-base font-semibold leading-6 text-gray-900"
                     >
-                      {clientToEdit ? 'Modifier le client' : 'Ajouter un client'}
+                      {client ? 'Modifier le client' : 'Ajouter un client'}
                     </Dialog.Title>
                   </div>
                 </div>
 
-                <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-6">
+                <form onSubmit={handleSubmit(handleFormSubmit)} className="mt-6 space-y-6">
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -264,7 +250,7 @@ export function ClientModal({ isOpen, onClose, clientToEdit }: ClientModalProps)
                       type="submit"
                       className="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                     >
-                      {clientToEdit ? 'Modifier' : 'Ajouter'}
+                      {client ? 'Modifier' : 'Ajouter'}
                     </button>
                   </div>
                 </form>

@@ -29,9 +29,19 @@ class StatistiquesService {
     return clients.length
   }
 
+  private initialiserStatsParType(): Record<PrestationType, number> {
+    return {
+      'SEO': 0,
+      'Dev Web': 0,
+      'Maintenance Dev Web': 0,
+      'Maintenance Site Web': 0,
+      'Site Internet': 0
+    }
+  }
+
   calculerRepartitionPrestations(clients: Client[]): RepartitionPrestation[] {
     const total = clients.reduce((acc, client) => acc + client.typePrestations.length, 0)
-    const repartition: Record<PrestationType, number> = {}
+    const repartition = this.initialiserStatsParType()
 
     clients.forEach(client => {
       client.typePrestations.forEach(type => {
@@ -82,7 +92,7 @@ class StatistiquesService {
     let csv = 'Statistiques de chiffre d\'affaires\n'
     csv += 'Mois,CA mensuel,Nombre de contrats\n'
     stats.forEach(stat => {
-      csv += `${stat.date},${stat.ca.toFixed(2)},${stat.nombre}\n`
+      csv += `${stat.date},${stat.ca.toFixed(2)},${stat.nombreContrats}\n`
     })
     
     csv += '\nRépartition des prestations\n'
