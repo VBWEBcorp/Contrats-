@@ -17,7 +17,6 @@ export interface Client {
   frequence: FrequenceType;
   dateDebut: string;
   dateFin?: string;
-  commentaire?: string;
 }
 
 export interface ClientHistorique extends Client {

@@ -159,6 +159,7 @@ export function ClientModal({ isOpen, onClose, clientToEdit }: ClientModalProps)
                           {...register('montant', {
                             required: 'Le montant est requis',
                             min: { value: 0, message: 'Le montant doit être positif' },
+                            valueAsNumber: true
                           })}
                           className="mt-1 block w-full rounded-none border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-background"
                         />
@@ -246,15 +247,6 @@ export function ClientModal({ isOpen, onClose, clientToEdit }: ClientModalProps)
                           {errors.typePrestations.message}
                         </p>
                       )}
-                    </div>
-                    <div>
-                      <label htmlFor="commentaire" className="block text-sm font-medium text-gray-700">
-                        Commentaire
-                      </label>
-                      <textarea
-                        {...register('commentaire')}
-                        className="mt-1 block w-full rounded-none border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-background"
-                      />
                     </div>
                   </div>
                   <div className="mt-6 flex justify-end gap-3">

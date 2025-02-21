@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react'
 import { Plus, Users2, Euro, Trash2, Edit2, Building2, CalendarRange, MoreVertical } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useSpring, animated } from 'react-spring'
-import { Client, PrestationType } from '../types/client'
+import { Client, PrestationType, TYPES_PRESTATIONS } from '../types/client'
 import { ClientModal } from './ClientModal'
 import { clientService } from '../services/ClientService'
 import { RootLayout, PageHeader, PageHeaderHeading, PageHeaderDescription } from './layout/RootLayout'
-import { cn, formatPrice } from '../lib/utils'
+import { formatPrice } from '../lib/utils'
 import { Card, CardBody, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button } from "@nextui-org/react"
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
@@ -49,12 +49,21 @@ export function ClientsList() {
   }
 
   const totalMensuel = clients.reduce((total, client) => {
-    const montantMensuel = client.frequence === 'mensuel' ? client.montant : client.montant / 12
+    // S'assurer que le montant est un nombre
+    const montant = typeof client.montant === 'string' ? parseFloat(client.montant) : client.montant
+    
+    // Calculer le montant mensuel selon la fréquence
+    const montantMensuel = client.frequence === 'mensuel' ? montant : montant / 12
+    
+    // Ajouter au total
     return total + montantMensuel
   }, 0)
 
+  // Arrondir le total à 2 décimales
+  const totalArrondi = Math.round(totalMensuel * 100) / 100
+
   const totalProps = useSpring({
-    number: totalMensuel,
+    number: totalArrondi,
     from: { number: 0 },
     config: { mass: 1, tension: 20, friction: 10 },
   })
@@ -240,9 +249,9 @@ export function ClientsList() {
                     <h3 className="font-medium">Total mensuel</h3>
                   </div>
                   <div className="flex items-baseline gap-2">
-                    <animated.span className="text-xl font-bold text-primary">
-                      {totalProps.number.to(n => formatPrice(n))}
-                    </animated.span>
+                    <span className="text-xl font-bold text-primary">
+                      {formatPrice(totalArrondi)}
+                    </span>
                     <span className="text-sm text-muted-foreground">/mois</span>
                   </div>
                 </div>
