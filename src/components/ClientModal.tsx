@@ -1,264 +1,173 @@
-import { Fragment, useEffect } from 'react'
-import { Dialog, Transition } from '@headlessui/react'
-import { useForm, Controller } from 'react-hook-form'
-import { Client, PrestationType } from '../types/client'
-import { clientService } from '../services/ClientService'
+import React from 'react';
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Input, Select, SelectItem } from "@nextui-org/react";
+import { useForm, Controller } from 'react-hook-form';
+import { Client, TYPES_PRESTATIONS, FrequenceType, PrestationType } from '../types/client';
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
 
 interface ClientModalProps {
-  isOpen: boolean
-  onClose: () => void
-  client?: Client
-  onSubmit?: (clientData: Omit<Client, "id">) => void
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: Omit<Client, 'id'>) => void;
+  client?: Client;
 }
 
-const TYPES_PRESTATIONS: PrestationType[] = [
-  'SEO',
-  'Dev Web',
-  'Maintenance Dev Web',
-  'Maintenance Site Web',
-  'Site Internet'
-]
+export default function ClientModal({ isOpen, onClose, onSubmit, client }: ClientModalProps) {
+  const { control, handleSubmit, reset } = useForm<Omit<Client, 'id'>>({
+    defaultValues: {
+      nom: client?.nom || '',
+      prenom: client?.prenom || '',
+      entreprise: client?.entreprise || '',
+      typePrestations: client?.typePrestations || [],
+      montant: client?.montant || 0,
+      frequence: client?.frequence || 'mensuel',
+      dateDebut: client?.dateDebut || new Date().toISOString().split('T')[0],
+      dateFin: client?.dateFin || ''
+    }
+  });
 
-export function ClientModal({ isOpen, onClose, client, onSubmit }: ClientModalProps) {
-  const {
-    register,
-    handleSubmit,
-    reset,
-    control,
-    formState: { errors }
-  } = useForm<Client>()
-
-  useEffect(() => {
+  React.useEffect(() => {
     if (client) {
-      const formData = {
+      reset({
         nom: client.nom,
         prenom: client.prenom,
         entreprise: client.entreprise,
         typePrestations: client.typePrestations,
         montant: client.montant,
         frequence: client.frequence,
-        dateDebut: client.dateDebut ? new Date(client.dateDebut).toISOString().split('T')[0] : '',
-        dateFin: client.dateFin ? new Date(client.dateFin).toISOString().split('T')[0] : ''
-      }
-      reset(formData)
+        dateDebut: client.dateDebut,
+        dateFin: client.dateFin
+      });
     }
-  }, [client, reset])
+  }, [client, reset]);
 
-  const handleFormSubmit = (data: Client) => {
-    if (client) {
-      clientService.updateClient({ ...data, id: client.id })
-    } else {
-      clientService.addClient(data)
-    }
-    if (onSubmit) {
-      onSubmit(data)
-    }
-    onClose()
-  }
+  const handleFormSubmit = (data: Omit<Client, 'id'>) => {
+    onSubmit(data);
+    onClose();
+  };
 
   return (
-    <Transition.Root show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-10" onClose={onClose}>
-        <Transition.Child
-          as={Fragment}
-          enter="ease-out duration-300"
-          enterFrom="opacity-0"
-          enterTo="opacity-100"
-          leave="ease-in duration-200"
-          leaveFrom="opacity-100"
-          leaveTo="opacity-0"
-        >
-          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
-        </Transition.Child>
-
-        <div className="fixed inset-0 z-10 overflow-y-auto">
-          <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-            <Transition.Child
-              as={Fragment}
-              enter="ease-out duration-300"
-              enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-              enterTo="opacity-100 translate-y-0 sm:scale-100"
-              leave="ease-in duration-200"
-              leaveFrom="opacity-100 translate-y-0 sm:scale-100"
-              leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-            >
-              <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
-                <div>
-                  <div className="mt-3 text-center sm:mt-5">
-                    <Dialog.Title
-                      as="h3"
-                      className="text-base font-semibold leading-6 text-gray-900"
-                    >
-                      {client ? 'Modifier le client' : 'Ajouter un client'}
-                    </Dialog.Title>
-                  </div>
-                </div>
-
-                <form onSubmit={handleSubmit(handleFormSubmit)} className="mt-6 space-y-6">
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label htmlFor="prenom" className="block text-sm font-medium text-gray-700">
-                          Prénom *
-                        </label>
-                        <input
-                          type="text"
-                          {...register('prenom', { required: 'Le prénom est requis' })}
-                          className="mt-1 block w-full rounded-none border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-background"
-                        />
-                        {errors.prenom && (
-                          <p className="mt-1 text-sm text-red-600">{errors.prenom.message}</p>
-                        )}
-                      </div>
-                      <div>
-                        <label htmlFor="nom" className="block text-sm font-medium text-gray-700">
-                          Nom *
-                        </label>
-                        <input
-                          type="text"
-                          {...register('nom', { required: 'Le nom est requis' })}
-                          className="mt-1 block w-full rounded-none border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-background"
-                        />
-                        {errors.nom && (
-                          <p className="mt-1 text-sm text-red-600">{errors.nom.message}</p>
-                        )}
-                      </div>
-                    </div>
-                    <div>
-                      <label htmlFor="entreprise" className="block text-sm font-medium text-gray-700">
-                        Entreprise
-                      </label>
-                      <input
-                        type="text"
-                        {...register('entreprise')}
-                        className="mt-1 block w-full rounded-none border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-background"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label htmlFor="montant" className="block text-sm font-medium text-gray-700">
-                          Montant (€) *
-                        </label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          {...register('montant', {
-                            required: 'Le montant est requis',
-                            min: { value: 0, message: 'Le montant doit être positif' },
-                            valueAsNumber: true
-                          })}
-                          className="mt-1 block w-full rounded-none border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-background"
-                        />
-                        {errors.montant && (
-                          <p className="mt-1 text-sm text-red-600">{errors.montant.message}</p>
-                        )}
-                      </div>
-                      <div>
-                        <label htmlFor="frequence" className="block text-sm font-medium text-gray-700">
-                          Fréquence *
-                        </label>
-                        <select
-                          {...register('frequence', { required: 'La fréquence est requise' })}
-                          className="mt-1 block w-full rounded-none border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-background"
-                        >
-                          <option value="mensuel">Mensuel</option>
-                          <option value="annuel">Annuel</option>
-                        </select>
-                        {errors.frequence && (
-                          <p className="mt-1 text-sm text-red-600">{errors.frequence.message}</p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label htmlFor="dateDebut" className="block text-sm font-medium text-gray-700">
-                          Date de début *
-                        </label>
-                        <input
-                          type="date"
-                          {...register('dateDebut', { required: 'La date de début est requise' })}
-                          className="mt-1 block w-full rounded-none border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-background"
-                        />
-                        {errors.dateDebut && (
-                          <p className="mt-1 text-sm text-red-600">{errors.dateDebut.message}</p>
-                        )}
-                      </div>
-                      <div>
-                        <label htmlFor="dateFin" className="block text-sm font-medium text-gray-700">
-                          Date de fin
-                        </label>
-                        <input
-                          type="date"
-                          {...register('dateFin')}
-                          className="mt-1 block w-full rounded-none border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-background"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Types de prestations *
-                      </label>
-                      <Controller
-                        name="typePrestations"
-                        control={control}
-                        rules={{ required: 'Sélectionnez au moins un type de prestation' }}
-                        render={({ field }) => (
-                          <div className="mt-2 space-y-2">
-                            {TYPES_PRESTATIONS.map((type) => (
-                              <div key={type} className="flex items-center">
-                                <input
-                                  type="checkbox"
-                                  id={type}
-                                  value={type}
-                                  checked={field.value.includes(type)}
-                                  onChange={(e) => {
-                                    const value = e.target.value as PrestationType
-                                    const newValue = e.target.checked
-                                      ? [...field.value, value]
-                                      : field.value.filter((v) => v !== value)
-                                    field.onChange(newValue)
-                                  }}
-                                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                />
-                                <label htmlFor={type} className="ml-2 text-sm text-gray-700">
-                                  {type}
-                                </label>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      />
-                      {errors.typePrestations && (
-                        <p className="mt-1 text-sm text-red-600">
-                          {errors.typePrestations.message}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="mt-6 flex justify-end gap-3">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onClose()
-                        reset()
-                      }}
-                      className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                    >
-                      Annuler
-                    </button>
-                    <button
-                      type="submit"
-                      className="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                    >
-                      {client ? 'Modifier' : 'Ajouter'}
-                    </button>
-                  </div>
-                </form>
-              </Dialog.Panel>
-            </Transition.Child>
-          </div>
-        </div>
-      </Dialog>
-    </Transition.Root>
-  )
+    <Modal isOpen={isOpen} onClose={onClose} size="2xl">
+      <ModalContent>
+        <form onSubmit={handleSubmit(handleFormSubmit)}>
+          <ModalHeader>{client ? 'Modifier le client' : 'Ajouter un client'}</ModalHeader>
+          <ModalBody className="gap-4">
+            <Controller
+              name="nom"
+              control={control}
+              rules={{ required: true }}
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  label="Nom"
+                  placeholder="Nom du client"
+                />
+              )}
+            />
+            <Controller
+              name="prenom"
+              control={control}
+              rules={{ required: true }}
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  label="Prénom"
+                  placeholder="Prénom du client"
+                />
+              )}
+            />
+            <Controller
+              name="entreprise"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  label="Entreprise"
+                  placeholder="Nom de l'entreprise"
+                />
+              )}
+            />
+            <Controller
+              name="typePrestations"
+              control={control}
+              rules={{ required: true }}
+              render={({ field }) => (
+                <Select
+                  {...field}
+                  label="Types de prestations"
+                  placeholder="Sélectionnez les types de prestations"
+                  selectionMode="multiple"
+                >
+                  {TYPES_PRESTATIONS.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </Select>
+              )}
+            />
+            <Controller
+              name="montant"
+              control={control}
+              rules={{ required: true, min: 0 }}
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  type="number"
+                  label="Montant"
+                  placeholder="Montant"
+                />
+              )}
+            />
+            <Controller
+              name="frequence"
+              control={control}
+              rules={{ required: true }}
+              render={({ field }) => (
+                <Select
+                  {...field}
+                  label="Fréquence"
+                  placeholder="Sélectionnez la fréquence"
+                >
+                  <SelectItem key="mensuel" value="mensuel">Mensuel</SelectItem>
+                  <SelectItem key="annuel" value="annuel">Annuel</SelectItem>
+                </Select>
+              )}
+            />
+            <Controller
+              name="dateDebut"
+              control={control}
+              rules={{ required: true }}
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  type="date"
+                  label="Date de début"
+                />
+              )}
+            />
+            <Controller
+              name="dateFin"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  type="date"
+                  label="Date de fin"
+                />
+              )}
+            />
+          </ModalBody>
+          <ModalFooter>
+            <Button color="danger" variant="light" onPress={onClose}>
+              Annuler
+            </Button>
+            <Button color="primary" type="submit">
+              {client ? 'Modifier' : 'Ajouter'}
+            </Button>
+          </ModalFooter>
+        </form>
+      </ModalContent>
+    </Modal>
+  );
 }

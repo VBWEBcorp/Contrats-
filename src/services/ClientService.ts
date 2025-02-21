@@ -1,5 +1,5 @@
-import { Client, ClientHistorique } from '../types/client'
-import { isBefore, parseISO } from 'date-fns'
+import { supabase } from '../lib/supabase';
+import { Client, ClientHistorique } from '../types/client';
 
 type Subscriber = () => void
 
@@ -143,6 +143,72 @@ class ClientService {
 
   private notifySubscribers() {
     this.subscribers.forEach(callback => callback())
+  }
+
+  static async getClients(): Promise<Client[]> {
+    const { data, error } = await supabase
+      .from('clients')
+      .select('*');
+
+    if (error) throw error;
+    return data || [];
+  }
+
+  static async addClient(client: Omit<Client, 'id'>): Promise<Client> {
+    const { data, error } = await supabase
+      .from('clients')
+      .insert([client])
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  static async updateClient(id: string, client: Partial<Client>): Promise<void> {
+    const { error } = await supabase
+      .from('clients')
+      .update(client)
+      .eq('id', id);
+
+    if (error) throw error;
+  }
+
+  static async deleteClient(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('clients')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+  }
+
+  static async archiveClient(client: Client, commentaire: string): Promise<void> {
+    const historiqueClient: Omit<ClientHistorique, 'id'> = {
+      client_id: client.id,
+      dateArchivage: new Date().toISOString(),
+      commentaire
+    };
+
+    const { error: archiveError } = await supabase
+      .from('historique_clients')
+      .insert([historiqueClient]);
+
+    if (archiveError) throw archiveError;
+
+    await this.deleteClient(client.id);
+  }
+
+  static async getClientsArchives(): Promise<ClientHistorique[]> {
+    const { data, error } = await supabase
+      .from('historique_clients')
+      .select(`
+        *,
+        clients (*)
+      `);
+
+    if (error) throw error;
+    return data || [];
   }
 }
 

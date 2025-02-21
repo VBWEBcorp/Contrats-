@@ -19,9 +19,11 @@ export interface Client {
   dateFin?: string;
 }
 
-export interface ClientHistorique extends Client {
+export interface ClientHistorique {
+  id: string;
+  client_id: string;
   dateArchivage: string;
-  commentaire?: string;
+  commentaire: string;
 }
 
 export const TYPES_PRESTATIONS: PrestationType[] = [
